@@ -3,11 +3,14 @@ public class BankAccount {
     private String accountHolder;
     private double balance;
 
+    private String password;
+
     // Constructor
-    public BankAccount(String accountNumber, String accountHolder, double balance) {
+    public BankAccount(String accountNumber, String accountHolder, double balance, String password) {
         this.accountNumber = accountNumber;
         this.accountHolder = accountHolder;
         this.balance = balance;
+        this.password = password;
     }
 
     // Accessor methods

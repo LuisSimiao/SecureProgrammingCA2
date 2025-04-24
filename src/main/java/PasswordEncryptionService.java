@@ -7,7 +7,7 @@ import java.util.Arrays;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-public class PasswordEncryptionServiceAns {
+public class PasswordEncryptionService {
 
 	public static boolean authenticate(String attemptedPassword, byte[] encryptedPassword, byte[] salt)
 			throws NoSuchAlgorithmException, InvalidKeySpecException {
