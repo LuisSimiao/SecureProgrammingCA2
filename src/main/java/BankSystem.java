@@ -7,7 +7,7 @@ import java.util.Scanner;
 
 public class BankSystem {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/SecureProgrammingCA2";  // Change to your MySQL username
+    private static final String URL = "jdbc:mysql://localhost:3306/bank_system";
     private static final String USER = "root"; // Change to your MySQL username
     private static final String PASSWORD = "password123"; // Change to your MySQL password
 
