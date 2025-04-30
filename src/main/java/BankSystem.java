@@ -1,9 +1,12 @@
 
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Scanner;
+import java.util.Arrays;
 
 public class BankSystem {
 
@@ -47,18 +50,67 @@ public class BankSystem {
     // this method will create a users account
     public static void createAccount() {
 
-        // enter AccountNo
-        // enter password
-        // store in database
-        System.out.print("Enter AccountNo: ");
-        String accountNo = scanner.next();
+        //create variables to store the user details
+        String accountNo = null;
+        String password = null;
+        double balance = 0.0;
 
-        System.out.print("Enter Password: ");
-        String password = scanner.next();
+        //loop until the user enters a valid credentials
+        //enter AccountNo
+        while (true) {
+            System.out.print("Enter AccountNo: ");
+            accountNo = scanner.next();
+            if (accountNo.trim().isEmpty()) {
+                System.out.println("Account number cannot be empty. Please try again.");
+            } else {
+                break;
+            }
+        }
+        //enter Password
+        //Password must be at least 8 characters long, include at least one number and one special character
+        while (true) {
+            System.out.print("Enter Password (must be at least 8 characters, include a number and a special character): ");
+            password = scanner.next();
+            if (password.length() < 8 || !password.matches(".*\\d.*") || !password.matches(".*[!@#$%^&*()].*")) {
+                System.out.println("Password must be at least 8 characters long, include at least one number, and one special character. Please try again.");
+            } else {
+                break;
+            }
+        }
+        //enter initial deposit
+        //initial deposit must be a positive number
+        //if deposit is less than 0, prompt the user to enter a valid number then loop
+        while (true) {
+            System.out.print("Enter initial deposit (must be a positive number): ");
+            if (scanner.hasNextDouble()) {
+                balance = scanner.nextDouble();
+                if (balance < 0) {
+                    System.out.println("Initial deposit must be a positive number. Please try again.");
+                } else {
+                    scanner.nextLine(); // Consume newline
+                    break;
+                }
+            } else {
+                System.out.println("Invalid input. Please enter a valid number.");
+                scanner.next(); // Clear invalid input
+            }
+        }
 
-        System.out.print("Enter initial deposit: ");
-        double balance = scanner.nextDouble();
-        scanner.nextLine(); // Consume newline
+        // Encrypt the password
+        byte[] salt;
+        byte[] encryptedPassword;
+        try {
+            salt = PasswordEncryptionService.generateSalt();
+            encryptedPassword = PasswordEncryptionService.getEncryptedPassword(password, salt);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            System.out.println("Error encrypting password: " + e.getMessage());
+            return;
+        }
+
+    // Convert salt and encrypted password to strings for storage
+    String saltString = Arrays.toString(salt);
+    String encryptedPasswordString = Arrays.toString(encryptedPassword);
+        
 
         // try connect to database
         // add the user details
@@ -66,8 +118,7 @@ public class BankSystem {
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
                 Statement stmt = conn.createStatement();) {
 
-            String sql = "INSERT INTO customers (accountNo, password, balance) VALUES ('"+accountNo + 1+"' , '"+password+"' , '"+balance+"');";
-            System.out.println(sql);
+            String sql = "INSERT INTO customers (accountNo, password, salt, balance) VALUES ('" + accountNo + "', '" + encryptedPasswordString + "', '" + saltString + "', '" + balance + "');";
             stmt.executeUpdate(sql);
             System.out.println("Account successfully created for " + accountNo);
 
@@ -103,6 +154,7 @@ public class BankSystem {
             } else {
                 System.out.println("Invalid username or password.");
             }
+            
 
         } catch (Exception e) {
             e.printStackTrace();
