@@ -1,4 +1,3 @@
-
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.Connection;
@@ -6,7 +5,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Scanner;
-import java.util.Arrays;
 
 public class BankSystem {
 
@@ -95,21 +93,23 @@ public class BankSystem {
                 scanner.next(); // Clear invalid input
             }
         }
-
-        // Encrypt the password
-        byte[] salt;
-        byte[] encryptedPassword;
+         // Generate a salt for the password
+        byte[] salt = null;
         try {
             salt = PasswordEncryptionService.generateSalt();
-            encryptedPassword = PasswordEncryptionService.getEncryptedPassword(password, salt);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            System.out.println("Error encrypting password: " + e.getMessage());
-            return;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
         }
 
-    // Convert salt and encrypted password to strings for storage
-    String saltString = Arrays.toString(salt);
-    String encryptedPasswordString = Arrays.toString(encryptedPassword);
+        // Encrypt the password using the generated salt
+        byte[] encryptedPassword = null;
+        try {
+            encryptedPassword = PasswordEncryptionService.getEncryptedPassword(password,salt);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
         
 
         // try connect to database
@@ -118,7 +118,8 @@ public class BankSystem {
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
                 Statement stmt = conn.createStatement();) {
 
-            String sql = "INSERT INTO customers (accountNo, password, salt, balance) VALUES ('" + accountNo + "', '" + encryptedPasswordString + "', '" + saltString + "', '" + balance + "');";
+            String sql = "INSERT INTO customers (accountNo, password, balance, salt) VALUES ('"+accountNo + 1+"' , '"+encryptedPassword+"' , '"+balance+"', '"+salt+"');";
+            System.out.println(sql);
             stmt.executeUpdate(sql);
             System.out.println("Account successfully created for " + accountNo);
 
@@ -144,17 +145,26 @@ public class BankSystem {
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
                 Statement stmt = conn.createStatement();) {
 
-            String sql = "SELECT * FROM customers WHERE accountNo = '"+accountNo+"' AND password ='"+password+"';";
-            System.out.println(sql);
+            // Retrieve the stored hashed password and salt for the given accountNo
+            String sql = "SELECT password, salt FROM customers WHERE accountNo = '" + accountNo + "';";
             ResultSet rs = stmt.executeQuery(sql);
 
             if (rs.next()) {
-                System.out.println("Login successful!");
-                validCustomer(accountNo); // the are a valid customer
+                // Get the stored hashed password and salt
+                byte[] salt = rs.getBytes("salt");
+
+                // Authenticate the entered password
+                boolean isAuthenticated = PasswordEncryptionService.authenticate(password, PasswordEncryptionService.getEncryptedPassword(password, salt), salt);
+
+                if (isAuthenticated) {
+                    System.out.println("Login successful!");
+                    validCustomer(accountNo); // Proceed to the next step
+                } else {
+                    System.out.println("Invalid username or password.");
+                }
             } else {
                 System.out.println("Invalid username or password.");
             }
-            
 
         } catch (Exception e) {
             e.printStackTrace();
