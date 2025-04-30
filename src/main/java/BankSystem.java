@@ -66,7 +66,8 @@ public class BankSystem {
             }
         }
         //enter Password
-        //Password must be at least 8 characters long, include at least one number and one special character
+        //Password must be at least 8 characters long, include at least one number and one special character for security
+        //if password is less than 8 characters, prompt the user to enter a valid password then loop
         while (true) {
             System.out.print("Enter Password (must be at least 8 characters, include a number and a special character): ");
             password = scanner.next();
@@ -116,9 +117,9 @@ public class BankSystem {
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, accountNo);
+            pstmt.setString(1, accountNo); // Store account number as a string
             pstmt.setBytes(2, encryptedPassword); // Store password as a byte array
-            pstmt.setDouble(3, balance);
+            pstmt.setDouble(3, balance); // Store balance as a double
             pstmt.setBytes(4, salt); // Store salt as a byte array
 
             pstmt.executeUpdate();
@@ -160,7 +161,13 @@ public class BankSystem {
 
                 if (isAuthenticated) {
                     System.out.println("Login successful!");
-                    validCustomer(accountNo); // Proceed to the next step
+                    // Call the SimpleMFA method to validate the OTP
+                    if(SimpleMFA()) {
+                        System.out.println("MFA successful!");
+                        validCustomer(accountNo); // Proceed to the next step
+                    } else {
+                        System.out.println("MFA failed. Exiting...");
+                    } 
                 } else {
                     System.out.println("Invalid username or password.");
                 }
@@ -263,5 +270,25 @@ public class BankSystem {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static boolean SimpleMFA(){
+        System.out.print("Enter the OTP sent to your email: ");
+        String otp = scanner.next();
+        // Simulate OTP validation (in a real-world scenario, you would send an OTP to the user's email or phone)
+
+        if (validateOTP(otp)) {
+            System.out.println("OTP validated successfully!");
+            return true;
+        } else {
+            System.out.println("Invalid OTP.");
+            return false;
+        } 
+    }
+
+    // Simulate OTP validation
+    public static boolean validateOTP(String otp) {
+        
+        return otp.equals("12345"); // Replace with actual OTP validation logic
     }
 }

@@ -34,7 +34,7 @@ CREATE TABLE `customers` (
 --
 -- Dumping data for table `users`
 --
-
+--
 #INSERT INTO `customers` (`accountNo`, `password`, `balance`) VALUES
 #('test', 'test', '100.23'),
 #('BOI16589', 'password1', '100.23'),
