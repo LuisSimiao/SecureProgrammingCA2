@@ -2,6 +2,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Scanner;
@@ -14,7 +15,7 @@ public class BankSystem {
 
     private static Scanner scanner = new Scanner(System.in);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException {
         // Sample customers
         System.out.println("Welcome to the ATU Bank System");
 
@@ -46,7 +47,7 @@ public class BankSystem {
     }
 
     // this method will create a users account
-    public static void createAccount() {
+    public static void createAccount() throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         //create variables to store the user details
         String accountNo = null;
@@ -104,23 +105,23 @@ public class BankSystem {
         // Encrypt the password using the generated salt
         byte[] encryptedPassword = null;
         try {
-            encryptedPassword = PasswordEncryptionService.getEncryptedPassword(password,salt);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeySpecException e) {
+            encryptedPassword = PasswordEncryptionService.getEncryptedPassword(password, salt);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             e.printStackTrace();
         }
-        
 
-        // try connect to database
-        // add the user details
-        // catch any exceptions
+        // Connect to the database
+        // Store the account details in the database using Prepared Statement
+        String sql = "INSERT INTO customers (accountNo, password, balance, salt) VALUES (?, ?, ?, ?)";
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-                Statement stmt = conn.createStatement();) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            String sql = "INSERT INTO customers (accountNo, password, balance, salt) VALUES ('"+accountNo + 1+"' , '"+encryptedPassword+"' , '"+balance+"', '"+salt+"');";
-            System.out.println(sql);
-            stmt.executeUpdate(sql);
+            pstmt.setString(1, accountNo);
+            pstmt.setBytes(2, encryptedPassword); // Store password as a byte array
+            pstmt.setDouble(3, balance);
+            pstmt.setBytes(4, salt); // Store salt as a byte array
+
+            pstmt.executeUpdate();
             System.out.println("Account successfully created for " + accountNo);
 
         } catch (Exception e) {
@@ -134,27 +135,28 @@ public class BankSystem {
 
         // enter username
         // enter password
-        // try connect to database
-        // validate the AccountNo and password
         System.out.print("Enter AccountNo: ");
         String accountNo = scanner.next();
 
         System.out.print("Enter Password: ");
         String password = scanner.next();
 
+        // Connect to the database and validate the user
+        // Use PreparedStatement to prevent SQL injection
+        String sql = "SELECT password, salt FROM customers WHERE accountNo = ?";
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
-                Statement stmt = conn.createStatement();) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            // Retrieve the stored hashed password and salt for the given accountNo
-            String sql = "SELECT password, salt FROM customers WHERE accountNo = '" + accountNo + "';";
-            ResultSet rs = stmt.executeQuery(sql);
+            pstmt.setString(1, accountNo);
+            ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                // Get the stored hashed password and salt
-                byte[] salt = rs.getBytes("salt");
+                // Get the stored hashed password and salt as byte arrays
+                byte[] storedEncryptedPassword = rs.getBytes("password");
+                byte[] storedSalt = rs.getBytes("salt");
 
                 // Authenticate the entered password
-                boolean isAuthenticated = PasswordEncryptionService.authenticate(password, PasswordEncryptionService.getEncryptedPassword(password, salt), salt);
+                boolean isAuthenticated = PasswordEncryptionService.authenticate(password, storedEncryptedPassword, storedSalt);
 
                 if (isAuthenticated) {
                     System.out.println("Login successful!");

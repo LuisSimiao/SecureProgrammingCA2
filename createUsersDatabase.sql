@@ -26,23 +26,24 @@ USE `bank_system`;
 
 CREATE TABLE `customers` (
   `accountNo` varchar(25) NOT NULL,
-  `password` varchar(25) NOT NULL,
-  `balance` float NOT NULL
+  `password` BLOB NOT NULL,
+  `balance` float NOT NULL,
+  `salt` BLOB NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `customers` (`accountNo`, `password`, `balance`) VALUES
-('test', 'test', '100.23'),
-('BOI16589', 'password1', '100.23'),
-('BOI23658', 'password2', '2000.36'),
-('BOI41235', 'password3', '500.99'),
-('BOI87854', 'password4', '123.65'),
-('BOI11236', 'password5', '6587.21'),
-('BOI65214', 'password6', '5000.00'),
-('BOI66985', 'password7', '86.35');
+#INSERT INTO `customers` (`accountNo`, `password`, `balance`) VALUES
+#('test', 'test', '100.23'),
+#('BOI16589', 'password1', '100.23'),
+#('BOI23658', 'password2', '2000.36'),
+#('BOI41235', 'password3', '500.99'),
+#('BOI87854', 'password4', '123.65'),
+#('BOI11236', 'password5', '6587.21'),
+#('BOI65214', 'password6', '5000.00'),
+#('BOI66985', 'password7', '86.35');
 
 --
 -- Indexes for dumped tables
