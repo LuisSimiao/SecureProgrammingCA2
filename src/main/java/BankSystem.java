@@ -167,12 +167,15 @@ public class BankSystem {
                         validCustomer(accountNo); // Proceed to the next step
                     } else {
                         System.out.println("MFA failed. Exiting...");
+                        login(); // Call the login method again
                     } 
                 } else {
                     System.out.println("Invalid username or password.");
+                    login(); // Call the login method again
                 }
             } else {
                 System.out.println("Invalid username or password.");
+                login(); // Call the login method again
             }
 
         } catch (Exception e) {
